@@ -13,7 +13,6 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 			and #AutoDrive.mapWayPoints[linked].incoming == 1
 			and #AutoDrive.mapWayPoints[linked].out == 1
 		then
-			alternative_applied = false
 			newdist = AutoDrive.dijkstraCalc.distance[current]
 		while
 				#AutoDrive.mapWayPoints[linked].incoming == 1
@@ -68,12 +67,11 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 
 			if #AutoDrive.mapWayPoints[linked].out > 0 then
 				local temp_Q_value = {};
+
 				AutoDrive.dijkstraCalc.Q.dummy_id = AutoDrive.dijkstraCalc.Q.dummy_id + 1
-				local temp_Q = {temp_Q_value, id=AutoDrive.dijkstraCalc.Q.dummy_id};
+				table.insert(AutoDrive.dijkstraCalc.Q,1,AutoDrive.dijkstraCalc.Q.dummy_id)
 
-				table.insert(AutoDrive.dijkstraCalc.Q,1,temp_Q)
-				AutoDrive.dijkstraCalc.Q[1].id = linked
-
+				AutoDrive.dijkstraCalc.Q[1] = linked
 			end
 		else
 			if current_pre ~= 0 then
@@ -108,16 +106,17 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 	end
 
 	AutoDrive:dijkstraLiveInit(Graph, start, setToUse);
+
 	while next(AutoDrive.dijkstraCalc.Q,nil) ~= nil do
 		local shortest = 10000000;
 		local shortest_id = -1;
 		for i, element_wp in pairs(AutoDrive.dijkstraCalc.Q) do
-			if AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i].id] < shortest then
-				shortest = AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i].id];
-				shortest_id = AutoDrive.dijkstraCalc.Q[i].id;
+			if AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]] < shortest then
+				shortest = AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]];
+				shortest_id = AutoDrive.dijkstraCalc.Q[i];
 				shortest_index = i;
 			end;
-			if AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i].id] >= 10000000 then
+			if AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]] >= 10000000 then
 				break;
 			end
 		end;
@@ -170,13 +169,11 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 									AutoDrive.dijkstraCalc.distance[linkedNodeId] = alternative;
 									AutoDrive.dijkstraCalc.pre[linkedNodeId] = shortest_id;
 
-									local temp_Q_value = {};
 									AutoDrive.dijkstraCalc.Q.dummy_id = AutoDrive.dijkstraCalc.Q.dummy_id + 1
-									local temp_Q = {temp_Q_value, id=AutoDrive.dijkstraCalc.Q.dummy_id};
 
-									table.insert(AutoDrive.dijkstraCalc.Q,1,temp_Q)
+									table.insert(AutoDrive.dijkstraCalc.Q,1,AutoDrive.dijkstraCalc.Q.dummy_id)
 
-									AutoDrive.dijkstraCalc.Q[1].id = linkedNodeId
+									AutoDrive.dijkstraCalc.Q[1] = linkedNodeId
 								end;
 							end
 						end;		-- if wp ~= nil then
@@ -209,10 +206,8 @@ function AutoDrive:dijkstraLiveInit(Graph, start, setToUse)
 
 	AutoDrive.dijkstraCalc.Q = {};
 	AutoDrive.dijkstraCalc.Q.dummy_id = 1000000
-
 	for i, point in pairs(Graph) do
-		AutoDrive.dijkstraCalc.Q[i] = point[setToUse];
-		AutoDrive.dijkstraCalc.Q[i].id = point.id;
+		AutoDrive.dijkstraCalc.Q[i] = point.id;
 		AutoDrive.dijkstraCalc.distance[i] = 10000000
 		AutoDrive.dijkstraCalc.pre[i] = -1;
 	end;
