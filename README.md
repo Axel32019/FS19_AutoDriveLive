@@ -1,6 +1,8 @@
 # FS19_AutoDriveLive
 Implementation of Dijkstra's algorithm for FS19_AutoDrive as Live route calculation
 
+Hintergrund / Vorgeschichte: https://github.com/Stephan-S/FS19_AutoDrive/issues/721
+
 Anleitung
 1. Wer (noch) nicht weiss wie Mods zu verändern sind, siehe Google, Youtube etc.
 	
