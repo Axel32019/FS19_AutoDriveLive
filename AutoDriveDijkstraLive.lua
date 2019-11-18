@@ -13,6 +13,9 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 			and #AutoDrive.mapWayPoints[linked].incoming == 1
 			and #AutoDrive.mapWayPoints[linked].out == 1
 		then
+			if nil == AutoDrive.dijkstraCalc.distance[current] then
+				AutoDrive.dijkstraCalc.distance[current] = 10000000
+			end
 			newdist = AutoDrive.dijkstraCalc.distance[current]
 		while
 				#AutoDrive.mapWayPoints[linked].incoming == 1
@@ -22,6 +25,9 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 
 			distanceToAdd = 0;
 			angle = 0;
+			if nil == AutoDrive.dijkstraCalc.pre[current] then
+				AutoDrive.dijkstraCalc.pre[current] = -1
+			end
 			if AutoDrive.setting_useFastestRoute == true then
 				if AutoDrive.dijkstraCalc.pre[current] ~= nil and AutoDrive.dijkstraCalc.pre[current] ~= -1 then
 					distanceToAdd, angle = AutoDrive:getDriveTimeBetweenNodes(current, linked, AutoDrive.dijkstraCalc.pre[current],nil,true);
@@ -47,6 +53,9 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 
 		distanceToAdd = 0;
 		angle = 0;
+		if nil == AutoDrive.dijkstraCalc.pre[current] then
+			AutoDrive.dijkstraCalc.pre[current] = -1
+		end
 		if AutoDrive.setting_useFastestRoute == true then
 			if AutoDrive.dijkstraCalc.pre[current] ~= nil and AutoDrive.dijkstraCalc.pre[current] ~= -1 then
 				distanceToAdd, angle = AutoDrive:getDriveTimeBetweenNodes(current, linked, AutoDrive.dijkstraCalc.pre[current],nil,true);
@@ -61,12 +70,17 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 		end;
 		newdist = newdist + distanceToAdd
 
+		if nil == AutoDrive.dijkstraCalc.distance[linked] then
+			AutoDrive.dijkstraCalc.distance[linked] = 10000000
+		end
+		if nil == AutoDrive.dijkstraCalc.pre[linked] then
+			AutoDrive.dijkstraCalc.pre[linked] = -1
+		end
 		if newdist < AutoDrive.dijkstraCalc.distance[linked] then
 			AutoDrive.dijkstraCalc.distance[linked] = newdist;
 			AutoDrive.dijkstraCalc.pre[linked] = current;
 
 			if #AutoDrive.mapWayPoints[linked].out > 0 then
-				local temp_Q_value = {};
 
 				AutoDrive.dijkstraCalc.Q.dummy_id = AutoDrive.dijkstraCalc.Q.dummy_id + 1
 				table.insert(AutoDrive.dijkstraCalc.Q,1,AutoDrive.dijkstraCalc.Q.dummy_id)
@@ -110,7 +124,10 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 	while next(AutoDrive.dijkstraCalc.Q,nil) ~= nil do
 		local shortest = 10000000;
 		local shortest_id = -1;
-		for i, element_wp in pairs(AutoDrive.dijkstraCalc.Q) do
+		for i, element_wp in ipairs(AutoDrive.dijkstraCalc.Q) do
+			if nil == AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]] then
+				AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]] = 10000000
+			end
 			if AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]] < shortest then
 				shortest = AutoDrive.dijkstraCalc.distance[AutoDrive.dijkstraCalc.Q[i]];
 				shortest_id = AutoDrive.dijkstraCalc.Q[i];
@@ -130,7 +147,7 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 		if shortest_id == -1 then
 			AutoDrive.dijkstraCalc.Q = {};
 		else
-			if AutoDrive.dijkstraCalc.Q[shortest_id] ~= nil then
+			if AutoDrive.dijkstraCalc.Q[shortest_index] ~= nil then
 				if #AutoDrive.mapWayPoints[shortest_id].out > 0 then
 					for i, linkedNodeId in pairs(AutoDrive.mapWayPoints[shortest_id].out) do
 						if linkedNodeId == shortest_id then break end		-- buggy for... gives own result
@@ -149,6 +166,9 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 							if result ~= true then
 								distanceToAdd = 0;
 								angle = 0;
+								if nil == AutoDrive.dijkstraCalc.pre[shortest_id] then
+									AutoDrive.dijkstraCalc.pre[shortest_id] = -1
+								end
 								if setting_useFastestRoute == true then
 									if AutoDrive.dijkstraCalc.pre[shortest_id] ~= nil and AutoDrive.dijkstraCalc.pre[shortest_id] ~= -1 then
 										distanceToAdd, angle = AutoDrive:getDriveTimeBetweenNodes(shortest_id, linkedNodeId, AutoDrive.dijkstraCalc.pre[shortest_id],nil,true);
@@ -164,6 +184,13 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 								end;
 
 								local alternative = shortest + distanceToAdd;
+
+								if nil == AutoDrive.dijkstraCalc.distance[linkedNodeId] then
+									AutoDrive.dijkstraCalc.distance[linkedNodeId] = 10000000
+								end
+								if nil == AutoDrive.dijkstraCalc.pre[linkedNodeId] then
+									AutoDrive.dijkstraCalc.pre[linkedNodeId] = -1
+								end
 
 								if alternative < AutoDrive.dijkstraCalc.distance[linkedNodeId] then
 									AutoDrive.dijkstraCalc.distance[linkedNodeId] = alternative;
@@ -194,8 +221,6 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 end;
 
 function AutoDrive:dijkstraLiveInit(Graph, start, setToUse)
-	local temp_Q = {};
-	local temp_Q_value = {};
 
 	if AutoDrive.dijkstraCalc == nil then
 		AutoDrive.dijkstraCalc = {};
@@ -206,15 +231,21 @@ function AutoDrive:dijkstraLiveInit(Graph, start, setToUse)
 
 	AutoDrive.dijkstraCalc.Q = {};
 	AutoDrive.dijkstraCalc.Q.dummy_id = 1000000
+
+--[[
 	for i, point in pairs(Graph) do
-		AutoDrive.dijkstraCalc.Q[i] = point.id;
-		AutoDrive.dijkstraCalc.distance[i] = 10000000
-		AutoDrive.dijkstraCalc.pre[i] = -1;
+		-- AutoDrive.dijkstraCalc.Q[i] = point.id;
+		-- AutoDrive.dijkstraCalc.distance[i] = 10000000
+		-- AutoDrive.dijkstraCalc.pre[i] = -1;
 	end;
+]]
+	AutoDrive.dijkstraCalc.Q.dummy_id = AutoDrive.dijkstraCalc.Q.dummy_id + 1
+	table.insert(AutoDrive.dijkstraCalc.Q,1,AutoDrive.dijkstraCalc.Q.dummy_id)
 
 	AutoDrive.dijkstraCalc.distance[start] = 0;
 
-	table.insert(AutoDrive.dijkstraCalc.Q,1,AutoDrive.dijkstraCalc.Q[start])
+	table.insert(AutoDrive.dijkstraCalc.Q,1,start)
+
 end;
 
 function AutoDrive:dijkstraLiveShortestPath(Graph,start_id,target_id)
@@ -237,7 +268,7 @@ function AutoDrive:dijkstraLiveShortestPath(Graph,start_id,target_id)
 				AutoDrive.dijkstraCalc.pre[id] ~= -1 then
 				id = AutoDrive.dijkstraCalc.pre[id];
 			else
-				print(("axel: AutoDrive:dijkstraLiveShortestPath ERROR AutoDrive.dijkstraCalc.pre[id] == nil id: %s"):format(tostring(id)))
+				-- print(("axel: AutoDrive:dijkstraLiveShortestPath ERROR AutoDrive.dijkstraCalc.pre[id] == nil id: %s count = %d"):format(tostring(id),count))
 				id = nil;
 			end;
 		end;
@@ -252,7 +283,6 @@ end;
 
 function AutoDrive:FastShortestPath(Graph,start,markerName, markerID)	
 	local wp = {};
-	local id = start;
 	local start_id = start;
 	local target_id = 0;
 
@@ -271,6 +301,11 @@ function AutoDrive:FastShortestPath(Graph,start,markerName, markerID)
 		return wp
 	end
 
+	if target_id == start_id then
+		table.insert(wp, 1, Graph[target_id]);
+		return wp
+	end
+
 	if enabledijkstralivedebug then
 		if getDate ~= nil then print(("axel: AutoDrive:FastShortestPath start %s"):format(getDate("%H:%M:%S"))) end
 	end
@@ -282,3 +317,6 @@ function AutoDrive:FastShortestPath(Graph,start,markerName, markerID)
 	end
 	return wp
 end;
+
+
+print("FS19_AutoDriveLive V 0.0.0.3 by axel")
