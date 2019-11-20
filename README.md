@@ -3,7 +3,7 @@ Implementation of Dijkstra's algorithm for FS19_AutoDrive as Live route calculat
 
 Hintergrund / Vorgeschichte: https://github.com/Stephan-S/FS19_AutoDrive/issues/721
 
-Aktuelle Version: V 0.0.0.3
+Aktuelle Version: V 0.0.0.4
 
 Anleitung
 1. Wer (noch) nicht weiss wie Mods zu verändern sind, siehe Google, Youtube etc.
@@ -25,9 +25,23 @@ Anleitung
 	end
   
 	]]
+	
+	NEU:
+	In Funktion AutoDrive:getDriveTimeBetweenNodes am Ende
+	
+	return driveTime
+	
+	ersetzen durch:
+	
+	return driveTime, angle
   
 6. Mod packen und ab in den LS-Mod-Ordner
 7. Ausprobieren
+
+Änderungen V 0.0.0.4:
+- Winkelberechnung komplett berücksichtigt
+- Anwendung der Einstellung useFastestRoute korrigiert
+
 
 Installation
 1. If you are not familiar with editing Mods please ask: Google, Youtube etc.
@@ -47,6 +61,15 @@ Installation
 	end
   
 	]]
+
+	NEW:
+	In Function AutoDrive:getDriveTimeBetweenNodes at the end replace
+	
+	return driveTime
+	
+	with:
+	
+	return driveTime, angle
   
 6. compress the Mod and move to FS Mod folder
 7. test it
