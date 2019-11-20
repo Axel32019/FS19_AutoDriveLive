@@ -36,10 +36,18 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 				end
 			else
 				distanceToAdd = AutoDrive:getDistanceBetweenNodes(current, linked);
+				if AutoDrive.dijkstraCalc.pre[current] ~= nil and AutoDrive.dijkstraCalc.pre[current] ~= -1 then
+					local wp_current = AutoDrive.mapWayPoints[current]
+					local wp_ahead = AutoDrive.mapWayPoints[linked]
+					local wp_ref = AutoDrive.mapWayPoints[AutoDrive.dijkstraCalc.pre[current]]
+					angle = math.abs(AutoDrive.angleBetween({x = wp_ahead.x - wp_current.x, z = wp_ahead.z - wp_current.z}, {x = wp_current.x - wp_ref.x, z = wp_current.z - wp_ref.z}))				
+				else
+					angle = 0
+				end
 			end;
 
 			if math.abs(angle) > 90 then
-				distanceToAdd = 10000000;
+				newdist = 10000000;
 			end;
 			newdist = newdist + distanceToAdd
 
@@ -64,9 +72,17 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 			end
 		else
 			distanceToAdd = AutoDrive:getDistanceBetweenNodes(current, linked);
+			if AutoDrive.dijkstraCalc.pre[current] ~= nil and AutoDrive.dijkstraCalc.pre[current] ~= -1 then
+				local wp_current = AutoDrive.mapWayPoints[current]
+				local wp_ahead = AutoDrive.mapWayPoints[linked]
+				local wp_ref = AutoDrive.mapWayPoints[AutoDrive.dijkstraCalc.pre[current]]
+				angle = math.abs(AutoDrive.angleBetween({x = wp_ahead.x - wp_current.x, z = wp_ahead.z - wp_current.z}, {x = wp_current.x - wp_ref.x, z = wp_current.z - wp_ref.z}))				
+			else
+				angle = 0
+			end
 		end;
 		if math.abs(angle) > 90 then
-			distanceToAdd = 10000000;
+			newdist = 10000000;
 		end;
 		newdist = newdist + distanceToAdd
 
@@ -108,7 +124,7 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 	local angle = 0;
 	local result = false
 	local target_found = false
-	local setting_useFastestRoute = AutoDrive:getSetting("useFastestRoute")
+
 
 	if 
 		Graph == nil
@@ -120,6 +136,9 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 	end
 
 	AutoDrive:dijkstraLiveInit(Graph, start, setToUse);
+	if nil ~= AutoDrive:getSetting("useFastestRoute") then
+		AutoDrive.setting_useFastestRoute = AutoDrive:getSetting("useFastestRoute")
+	end
 
 	while next(AutoDrive.dijkstraCalc.Q,nil) ~= nil do
 		local shortest = 10000000;
@@ -139,7 +158,7 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 		end;
 
 		if shortest_id == target then
-			return true; -- AutoDrive.dijkstraCalc;
+			return true;
 		end
 
 		table.remove(AutoDrive.dijkstraCalc.Q,shortest_index)
@@ -160,7 +179,7 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 							result, target_found = AutoDrive:dijkstraLiveLongLine(shortest_id, linkedNodeId, target, shortest_index)
 
 							if target_found == true then
-								return true -- AutoDrive.dijkstraCalc;
+								return true
 							end
 
 							if result ~= true then
@@ -169,7 +188,7 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 								if nil == AutoDrive.dijkstraCalc.pre[shortest_id] then
 									AutoDrive.dijkstraCalc.pre[shortest_id] = -1
 								end
-								if setting_useFastestRoute == true then
+								if AutoDrive.setting_useFastestRoute == true then
 									if AutoDrive.dijkstraCalc.pre[shortest_id] ~= nil and AutoDrive.dijkstraCalc.pre[shortest_id] ~= -1 then
 										distanceToAdd, angle = AutoDrive:getDriveTimeBetweenNodes(shortest_id, linkedNodeId, AutoDrive.dijkstraCalc.pre[shortest_id],nil,true);
 									else
@@ -177,13 +196,20 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 									end
 								else
 									distanceToAdd = AutoDrive:getDistanceBetweenNodes(shortest_id, linkedNodeId);
+									if AutoDrive.dijkstraCalc.pre[shortest_id] ~= nil and AutoDrive.dijkstraCalc.pre[shortest_id] ~= -1 then
+										local wp_current = AutoDrive.mapWayPoints[shortest_id]
+										local wp_ahead = AutoDrive.mapWayPoints[linkedNodeId]
+										local wp_ref = AutoDrive.mapWayPoints[AutoDrive.dijkstraCalc.pre[shortest_id]]
+										angle = math.abs(AutoDrive.angleBetween({x = wp_ahead.x - wp_current.x, z = wp_ahead.z - wp_current.z}, {x = wp_current.x - wp_ref.x, z = wp_current.z - wp_ref.z}))				
+									else
+										angle = 0
+									end
 								end;
-
-								if math.abs(angle) > 90 then
-									distanceToAdd = 10000000;
-								end;
-
 								local alternative = shortest + distanceToAdd;
+								if math.abs(angle) > 90 then
+									alternative = 10000000;
+
+								end;
 
 								if nil == AutoDrive.dijkstraCalc.distance[linkedNodeId] then
 									AutoDrive.dijkstraCalc.distance[linkedNodeId] = 10000000
@@ -205,16 +231,16 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 							end
 						end;		-- if wp ~= nil then
 						if linkedNodeId == target then
-							return true -- AutoDrive.dijkstraCalc;
+							return true
 						end ;
 					end;	-- for i, linkedNodeId in pairs...
 				end -- if
-			end;		-- if AutoDrive.dijkstraCalc.Q[shortest_id] ~= nil then
+			end; -- if AutoDrive.dijkstraCalc.Q[shortest_id] ~= nil then
 		end;
 	end;
 
 	if next(AutoDrive.dijkstraCalc.Q,nil) == nil then
-		return true -- AutoDrive.dijkstraCalc;
+		return true
 	end;
 
 	return false;
@@ -267,9 +293,10 @@ function AutoDrive:dijkstraLiveShortestPath(Graph,start_id,target_id)
 			if AutoDrive.dijkstraCalc.pre[id] ~= nil and
 				AutoDrive.dijkstraCalc.pre[id] ~= -1 then
 				id = AutoDrive.dijkstraCalc.pre[id];
-			else
-				-- print(("axel: AutoDrive:dijkstraLiveShortestPath ERROR AutoDrive.dijkstraCalc.pre[id] == nil id: %s count = %d"):format(tostring(id),count))
-				id = nil;
+			else	-- invalid Route -> keep Vehicle at start point
+--				print(string.format("axel: AutoDrive:dijkstraLiveShortestPath ERROR invalid Route count = %d -> keep Vehicle at start point",count))
+-- TODO: message to user route not calculateable
+				return {};
 			end;
 		end;
 		if count > 50000 then
@@ -319,4 +346,4 @@ function AutoDrive:FastShortestPath(Graph,start,markerName, markerID)
 end;
 
 
-print("FS19_AutoDriveLive V 0.0.0.3 by axel")
+print("FS19_AutoDriveLive V 0.0.0.4 by Axel")
