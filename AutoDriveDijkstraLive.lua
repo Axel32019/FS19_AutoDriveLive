@@ -8,20 +8,20 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 	local current_pre = 0
 
 	if
-			AutoDrive.mapWayPoints[linked].incoming ~= nil
-			and AutoDrive.mapWayPoints[linked].out ~= nil
-			and #AutoDrive.mapWayPoints[linked].incoming == 1
-			and #AutoDrive.mapWayPoints[linked].out == 1
-		then
-			if nil == AutoDrive.dijkstraCalc.distance[current] then
-				AutoDrive.dijkstraCalc.distance[current] = 10000000
-			end
-			newdist = AutoDrive.dijkstraCalc.distance[current]
+		AutoDrive.mapWayPoints[linked].incoming ~= nil
+		and AutoDrive.mapWayPoints[linked].out ~= nil
+		and #AutoDrive.mapWayPoints[linked].incoming == 1
+		and #AutoDrive.mapWayPoints[linked].out == 1
+	then
+		if nil == AutoDrive.dijkstraCalc.distance[current] then
+			AutoDrive.dijkstraCalc.distance[current] = 10000000
+		end
+		newdist = AutoDrive.dijkstraCalc.distance[current]
 		while
-				#AutoDrive.mapWayPoints[linked].incoming == 1
-				and #AutoDrive.mapWayPoints[linked].out == 1
-				and not (linked == target_id)
-			do
+			#AutoDrive.mapWayPoints[linked].incoming == 1
+			and #AutoDrive.mapWayPoints[linked].out == 1
+			and not (linked == target_id)
+		do
 
 			distanceToAdd = 0;
 			angle = 0;
@@ -55,6 +55,10 @@ function AutoDrive:dijkstraLiveLongLine(current_in, linked_in, target_id, shorte
 
 			current = linked
 			linked = AutoDrive.mapWayPoints[current].out[1]
+
+			if nil == AutoDrive.dijkstraCalc.pre[linked] then
+				AutoDrive.dijkstraCalc.pre[linked] = -1
+			end
 			current_pre = AutoDrive.dijkstraCalc.pre[linked]
 
 		end		-- while...
@@ -169,7 +173,6 @@ function AutoDrive:dijkstraLive(Graph,start,setToUse,target)
 			if AutoDrive.dijkstraCalc.Q[shortest_index] ~= nil then
 				if #AutoDrive.mapWayPoints[shortest_id].out > 0 then
 					for i, linkedNodeId in pairs(AutoDrive.mapWayPoints[shortest_id].out) do
-						if linkedNodeId == shortest_id then break end		-- buggy for... gives own result
 
 						local wp = AutoDrive.mapWayPoints[linkedNodeId]
 
@@ -248,6 +251,10 @@ end;
 
 function AutoDrive:dijkstraLiveInit(Graph, start, setToUse)
 
+	if AutoDrive.setting_useFastestRoute == nil then
+		AutoDrive.setting_useFastestRoute = true
+	end;
+
 	if AutoDrive.dijkstraCalc == nil then
 		AutoDrive.dijkstraCalc = {};
 	end;
@@ -269,6 +276,9 @@ function AutoDrive:dijkstraLiveInit(Graph, start, setToUse)
 	table.insert(AutoDrive.dijkstraCalc.Q,1,AutoDrive.dijkstraCalc.Q.dummy_id)
 
 	AutoDrive.dijkstraCalc.distance[start] = 0;
+	if nil == AutoDrive.dijkstraCalc.pre[start] then
+		AutoDrive.dijkstraCalc.pre[start] = -1
+	end
 
 	table.insert(AutoDrive.dijkstraCalc.Q,1,start)
 
@@ -284,7 +294,7 @@ function AutoDrive:dijkstraLiveShortestPath(Graph,start_id,target_id)
 	local count = 1;
 	local id = target_id;
 
-	while AutoDrive.dijkstraCalc.pre[id] ~= -1 and id ~= nil do
+	while (AutoDrive.dijkstraCalc.pre[id] ~= -1 and id ~= nil) or id == start_id do
 		table.insert(wp, 1, Graph[id]);
 		count = count+1;
 		if id == start_id then
@@ -294,13 +304,13 @@ function AutoDrive:dijkstraLiveShortestPath(Graph,start_id,target_id)
 				AutoDrive.dijkstraCalc.pre[id] ~= -1 then
 				id = AutoDrive.dijkstraCalc.pre[id];
 			else	-- invalid Route -> keep Vehicle at start point
---				print(string.format("axel: AutoDrive:dijkstraLiveShortestPath ERROR invalid Route count = %d -> keep Vehicle at start point",count))
+--				print(string.format("Axel: AutoDrive:dijkstraLiveShortestPath ERROR invalid Route count = %d -> keep Vehicle at start point",count))
 -- TODO: message to user route not calculateable
 				return {};
 			end;
 		end;
 		if count > 50000 then
-			print(string.format("axel: AutoDrive:dijkstraLiveShortestPath ERROR count > 50000"))
+			print(string.format("Axel: AutoDrive:dijkstraLiveShortestPath ERROR count > 50000"))
 			return {};  --something went wrong. prevent overflow here
 		end;
 	end;
@@ -334,16 +344,16 @@ function AutoDrive:FastShortestPath(Graph,start,markerName, markerID)
 	end
 
 	if enabledijkstralivedebug then
-		if getDate ~= nil then print(("axel: AutoDrive:FastShortestPath start %s"):format(getDate("%H:%M:%S"))) end
+		if getDate ~= nil then print(("Axel: AutoDrive:FastShortestPath start %s"):format(getDate("%H:%M:%S"))) end
 	end
 
 	wp = AutoDrive:dijkstraLiveShortestPath(Graph,start_id,target_id)
 
 	if enabledijkstralivedebug then
-		if getDate ~= nil then print(("axel: AutoDrive:FastShortestPath end %s"):format(getDate("%H:%M:%S"))) end
+		if getDate ~= nil then print(("Axel: AutoDrive:FastShortestPath end %s"):format(getDate("%H:%M:%S"))) end
 	end
 	return wp
 end;
 
 
-print("FS19_AutoDriveLive V 0.0.0.4 by Axel")
+print("FS19_AutoDriveLive V 0.0.0.5 by Axel")
