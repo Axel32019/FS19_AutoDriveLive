@@ -3,7 +3,7 @@ Implementation of Dijkstra's algorithm for FS19_AutoDrive as Live route calculat
 
 Hintergrund / Vorgeschichte: https://github.com/Stephan-S/FS19_AutoDrive/issues/721
 
-Aktuelle Version: V 0.0.0.5
+Aktuelle Version: V 0.0.0.6
 
 Anleitung
 1. Wer (noch) nicht weiss wie Mods zu verändern sind, siehe Google, Youtube etc.
@@ -37,6 +37,9 @@ Anleitung
   
 6. Mod packen und ab in den LS-Mod-Ordner
 7. Ausprobieren
+
+Änderungen V 0.0.0.6
+- Fix #6 - Berücksichtigung der AD Einstellungen korrigiert
 
 Änderungen V 0.0.0.5
 - Fix #4 - Strecke nicht mehr befahrbar, ohne Live funktioniert es
